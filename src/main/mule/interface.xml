@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ">
+    <flow name="cn-cmd-sys-api-main">
+        <http:listener config-ref="cn-cmd-sys-api-httpListenerConfig" path="/api/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[%dw 2.0
+output application/json
+---
+payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="cn-cmd-sys-api-config" />
+        <error-handler ref="global_error_handler" />
+    </flow>
+    <flow name="cn-cmd-sys-api-console">
+        <http:listener config-ref="cn-cmd-sys-api-httpListenerConfig" path="/console/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="cn-cmd-sys-api-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="post:\customer\(customerId)\patient\xml:application\xml:cn-cmd-sys-api-config">
+        <logger level="INFO" doc:name="post: patient flow started" doc:id="dd5653b8-debe-447a-8963-f85d1aa8278f" message="post: patient flow started" />
+        <ee:transform doc:name="customerId">
+            <ee:variables>
+                <ee:set-variable variableName="customerId">attributes.uriParams.'customerId'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <flow-ref doc:name="post-patient-to-cmd" doc:id="78b0a3ef-9385-44cd-b700-1a543afa996e" name="post-patient-to-cmd" />
+        <ee:transform doc:name="response (payload)json">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        <logger level="INFO" doc:name="post: patient flow end" doc:id="fdd3fbae-7f4f-4b39-91c4-6b250ba4eaa6" message="post: patient flow end" />
+    </flow>
+    <flow name="post:\customer\(customerId)\claim\xml:application\xml:cn-cmd-sys-api-config">
+        <logger level="INFO" doc:name="post: claim(professional) flow started" doc:id="f24847a2-dda7-4cdc-aac7-edb537c8cc66" message="post: claim(professional) flow started" />
+        <ee:transform doc:name="customerID">
+            <ee:variables>
+                <ee:set-variable variableName="customerId">attributes.uriParams.'customerId'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <flow-ref doc:name="post-claim(prof)-to-cmd" doc:id="c6224079-4d1a-4e9a-b470-9913dc7c0824" name="post-claim(prof)-to-cmd" />
+        <ee:transform doc:name="response (payload)json">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        <logger level="INFO" doc:name="post: claim(professional) flow end" doc:id="9c20f249-7b4d-466c-9dec-e75a96b93675" message="post: claim(professional) flow end" />
+    </flow>
+    <flow name="post:\customer\(customerId)\iclaim\xml:application\xml:cn-cmd-sys-api-config">
+        <logger level="INFO" doc:name="post: iclaim(institutional) flow started" doc:id="e590be0a-9534-432b-854e-80195e192efc" message="post: iclaim(institutional) flow started" />
+        <ee:transform doc:name="customerID">
+            <ee:variables>
+                <ee:set-variable variableName="customerId">attributes.uriParams.'customerId'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <flow-ref doc:name="post-claim(inst)-to-cmd" doc:id="f4180151-1768-4eb6-b3e8-3a0fff5621bf" name="post-claim(inst)-to-cmd" />
+        <ee:transform doc:name="response (payload)json">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        <logger level="INFO" doc:name="post: iclaim(institutional) flow end" doc:id="9ad7d476-05c0-4a18-afa9-c3eac41ed837" message="post: iclaim(institutional) flow end" />
+    </flow>
+    <flow name="patch:\customer\(customerId)\patient\xml:application\xml:cn-cmd-sys-api-config">
+        <logger level="INFO" doc:name="patch: patient update flow started" doc:id="c13fab60-ecc5-4d20-9042-209f48cbb419" message="patch: patient update flow started" />
+        <ee:transform doc:name="customerID">
+            <ee:variables>
+                <ee:set-variable variableName="customerId">attributes.uriParams.'customerId'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <flow-ref doc:name="patch-patient-to-cmd" doc:id="af2284d1-fd0c-4549-9983-00866746057a" name="patch-patient-to-cmd" />
+        <ee:transform doc:name="response (payload)json">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        <logger level="INFO" doc:name="patch: patient update flow end" doc:id="b567e53b-dec6-4780-8f60-e102c5f9c7ab" message="patch: patient update flow end" />
+    </flow>
+    <flow name="get:\customer\(customerId)\patient\(patientId)\xml:cn-cmd-sys-api-config">
+        <ee:transform doc:name="Transform Message">
+            <ee:variables>
+                <ee:set-variable variableName="customerId">attributes.uriParams.'customerId'</ee:set-variable>
+                <ee:set-variable variableName="patientId">attributes.uriParams.'patientId'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <ee:transform doc:name="Transform Message">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/xml
+---
+do {
+  ns ns1 http://www.collaboratemd.com/api/v1/
+  ---
+  {
+    ns1#PatientUpdatesResponseXML: {
+      ns1#Status: "SUCCESS",
+      ns1#StatusMessage: "SUCCESS",
+      Patient: {
+        LastName: "SMITH",
+        FirstName: "JEMS",
+        MiddleInitial: null,
+        BirthDate: "01-Jan-1984",
+        Gender: "Male",
+        SSN: "012345678",
+        Address: {
+          Line1: "11601 TEST DRIVE",
+          Line2: null,
+          City: "ORLANDO",
+          State: "FL",
+          Zipcode: "32801"
+        },
+        HomePhone: "3213232133",
+        CellPhone: "4079290978",
+        WorkPhone: "4079290977",
+        WorkExtension: "1234",
+        Email: "TEST@TEST.COM",
+        Identifier: "64643262",
+        OtherIdentifier: null,
+        VisitID: null,
+        MaritalStatus: "3",
+        Race: "Other Race",
+        Ethnicity: null,
+        Language: "O",
+        Guarantor: {
+          LastName: null,
+          FirstName: null,
+          MiddleInitial: null,
+          Address: {
+            Line1: null,
+            Line2: null,
+            City: null,
+            State: null,
+            Zipcode: null
+          },
+          HomePhone: null,
+          CellPhone: null,
+          WorkPhone: null,
+          Relationship: "N"
+        },
+        EmergencyContact: {
+          LastName: null,
+          FirstName: null,
+          MiddleInitial: null,
+          Address: {
+            Line1: null,
+            Line2: null,
+            City: null,
+            State: null,
+            Zipcode: null
+          },
+          HomePhone: null,
+          CellPhone: null,
+          WorkPhone: null,
+          Email: null,
+          Relationship: "4"
+        }
+      }
+    }
+  }
+} as Object {encoding: "UTF-8", mediaType: "application/xml"}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+</mule>

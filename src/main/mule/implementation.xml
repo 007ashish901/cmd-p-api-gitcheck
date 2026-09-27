@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="post-claim(inst)-to-cmd" doc:id="ab0ae958-396b-4a14-bcc1-ff575a7bc2a9" >
+		<logger level="INFO" doc:name="sub-flow-start" doc:id="0dabddd7-e394-48b7-82db-cb5717509ab5" message="subflow-post-iclaim-start"/>
+		<ee:transform doc:name="adding namespace for XML payload" doc:id="e02bc595-6313-43e3-a3a5-f4959ede9940" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml encoding="UTF-8"
+ns ns2 http://www.collaboratemd.com/api/v1/
+---
+{
+  "ns2:IClaim" @("xmlns:ns2": ns2): payload.IClaim
+}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="before request to cmd" doc:id="d3a90b21-42ca-40e8-9268-ad4c5cceaa38" message="before request to cmd"/>
+		<http:request method="POST" doc:name="Request for post-iclaim-to-cmd" doc:id="e573833b-fba3-4d4c-8d18-8b0bb9492a11" config-ref="HTTP_Request_configuration" path="/{customerId}/iclaim/xml">
+			<reconnect frequency="30000" count="3"/>
+			<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	customerId : attributes.uriParams.customerId
+}]]]></http:uri-params>
+		</http:request>
+		<logger level="INFO" doc:name="after-request-to-cmd" doc:id="96551019-9e5a-48e6-ab6d-f04715786ccd" message="after-request-to-cmd"/>
+		<logger level="INFO" doc:name="subflow-end" doc:id="602cae59-d704-4490-8af8-ce96b0b77199" message="subflow-post-iclaim-end"/>
+	</flow>
+	<flow name="patch-patient-to-cmd" doc:id="cd784416-7b9f-4854-8b3c-a5408cd7f8d0" >
+		<logger level="INFO" doc:name="sub-flow-start" doc:id="91484c6f-6a69-43c6-acc0-fb88a2b64844" message="subflow-patch-patient-started"/>
+		<ee:transform doc:name="adding namespace for XML payload" doc:id="fbf1cd1f-1e3e-4165-bf08-6b73c953776a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml encoding="UTF-8"
+ns ns2 http://www.collaboratemd.com/api/v1/
+---
+{
+  "ns2:PatientUpdate" @("xmlns:ns2": ns2): payload.PatientUpdate
+}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="before-request-to-CMD" doc:id="65979831-363b-4f71-bed6-5a80ad2ba553" message="before-request-to-CMD"/>
+		<http:request method="POST" doc:name="Request for update-patient-to-cmd" doc:id="0c9104f1-b0d8-4cd3-98a7-0a91d1178239" config-ref="HTTP_Request_configuration" path="/{customerId}/patient/xml">
+			<reconnect frequency="30000" count="3" />
+			<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	customerId : attributes.uriParams.customerId
+}]]]></http:uri-params>
+		</http:request>
+		<logger level="INFO" doc:name="after-request-to-CMD" doc:id="f7623e6f-e1b9-4a6e-9de2-412299e1b410" message="after-request-to-CMD"/>
+		<logger level="INFO" doc:name="subflow-end" doc:id="97f4516d-beb8-4608-9c88-398381ef072a" message="subflow-patch-patient-end"/>
+	</flow>
+	<flow name="post-claim(prof)-to-cmd" doc:id="3968d30c-c2ca-47c4-bebb-339beb5f8cf8" >
+		<logger level="INFO" doc:name="subflow-start" doc:id="f8da51f4-ad53-4bdf-b677-e56bcacd84a1" message="subflow-post-claim-started"/>
+		<ee:transform doc:name="adding namespace for XML payload" doc:id="f9c8c54c-9571-461e-9915-16db3c126a60" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml encoding="UTF-8"
+ns ns2 http://www.collaboratemd.com/api/v1/
+---
+{
+  "ns2:Claim" @("xmlns:ns2": ns2): payload.Claim
+}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="before request to cmd" doc:id="2b5f21fd-c8ae-4261-8e4b-fe1c95701212" message="before request to cmd"/>
+		<http:request method="POST" doc:name="Request for post-claim(prof)-to-cmd" doc:id="bfb00275-4aba-4367-8731-08b2e4f1918d" config-ref="HTTP_Request_configuration" path="/{customerId}/claim/xml">
+			<reconnect frequency="30000" count="3" />
+			<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	customerId : attributes.uriParams.customerId
+}]]]></http:uri-params>
+		</http:request>
+		<logger level="INFO" doc:name="after-request-to-cmd" doc:id="c3418bb2-0f5c-47de-ad23-a080b426b252" message="after-request-to-cmd"/>
+		<logger level="INFO" doc:name="subflow-end" doc:id="cd814393-2961-41b4-aa69-d0b8417c4bcb" message="subflow-post-claim-end"/>
+	</flow>
+	<flow name="post-patient-to-cmd" doc:id="9942eb17-0022-4a94-ad1f-260e500ad75d" >
+		<logger level="INFO" doc:name="sub-flow-started" doc:id="86e61fc5-8478-40c7-ad96-82ebb3d903de" message="subflow-post-patient-started"/>
+		<ee:transform doc:name="adding namespace for XML payload" doc:id="935b02a7-3b1d-4971-8066-8b75b2b1e186" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml encoding="UTF-8"
+ns ns2 http://www.collaboratemd.com/api/v1/
+---
+{
+  "ns2:PatientUpdate" @("xmlns:ns2": ns2): payload.PatientUpdate
+}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="before request to cmd" doc:id="d359aa9d-9919-4391-8f22-22ec368c77f3" message="before request to cmd"/>
+		<http:request method="POST" doc:name="Request for post-patient-to-cmd" doc:id="b514b5b8-ff8f-46f1-b398-89c7a20e261f" config-ref="HTTP_Request_configuration" path="/{customerId}/patient/xml">
+			<reconnect frequency="30000" count="3" />
+			<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	customerId : attributes.uriParams.customerId
+}]]]></http:uri-params>
+		</http:request>
+		<logger level="INFO" doc:name="after-request-to-cmd" doc:id="cb410729-1bcf-4185-9c8e-86502d778e95" message="after-request-to-cmd"/>
+		<logger level="INFO" doc:name="subflow-end" doc:id="e6d0ba17-f667-4c26-b70c-a694b27b5dbd" message="subflow-post-patient-end"/>
+	</flow>
+</mule>

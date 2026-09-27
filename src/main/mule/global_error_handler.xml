@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:email="http://www.mulesoft.org/schema/mule/email"
+	xmlns:cloudhub="http://www.mulesoft.org/schema/mule/cloudhub"
+	xmlns:sftp="http://www.mulesoft.org/schema/mule/sftp"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd
+http://www.mulesoft.org/schema/mule/cloudhub http://www.mulesoft.org/schema/mule/cloudhub/current/mule-cloudhub.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd">
+
+	<error-handler name="global_error_handler">
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="f5caf32b-ba23-4c0f-ae9c-d96e0869563f" >
+			<choice doc:name="Choice" doc:id="a4196c7f-b99d-441c-a71d-61b2846135e0" >
+				<when expression='#[(error.errorType.namespace == "HTTP" and error.errorType.identifier == "UNAUTHORIZED")   or  (error.errorType.namespace == "HTTP" and error.errorType.identifier == "CONNECTIVITY")]'>
+					<logger level="INFO" doc:name="Logger" doc:id="c4c80f06-8d86-4755-9143-bb2b9ca15150" message="before sending email to client "/>
+					<ee:transform doc:name="Transform Message" doc:id="963cfe19-957f-4683-a67c-91cb77b77bfa" >
+						<ee:message >
+						</ee:message>
+						<ee:variables >
+							<ee:set-variable variableName="emailErrorMessage" ><![CDATA[%dw 2.0
+output application/java
+---
+(
+  if (error.errorType.namespace == "HTTP" and error.errorType.identifier == "CONNECTIVITY")
+    "Failed due to a CONNECTIVITY issue with the CMD API while connecting to the resource on "
+  else if (error.errorType.namespace == "HTTP" and error.errorType.identifier == "UNAUTHORIZED")
+    "Failed due to an UNAUTHORIZED (401) error with the CMD API while connecting to the resource on "
+  else
+    "Data sync from Salesforce to CMD failed due to an unexpected system error on "
+) ++ now() as String { format: "yyyy-MM-dd" }
+]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+					<parse-template doc:name="Parse Template" doc:id="6c306a2b-646f-4559-adee-601111070783" location="htmlTemplates.leadAccount/errorEmail.template" target="errorEmailTemplate" targetValue="#[payload]"/>
+					<email:send doc:name="Send error mail" doc:id="4d9302e6-6dd7-48f2-9310-877d2c7f977d" fromAddress="${emailSmtp.from}" toAddresses="#[Mule::p('emailSmtp.to') splitBy &quot;,&quot;]" subject="#[p('mule.environment') default &quot;&quot; ++ &quot;This error while transferring data to CMD&quot;]" config-ref="Email_SMTP">
+						<email:body contentType="text/html">
+							<email:content ><![CDATA[#[vars.errorEmailTemplate]]]></email:content>
+						</email:body>
+					</email:send>
+					<logger level="INFO" doc:name="Logger" doc:id="833762c3-b422-4d91-92c8-24fb12c1a9ec" message="after sending email to client "/>
+				</when>
+				<otherwise >
+					<logger level="INFO" doc:name="Logger" doc:id="9e727b66-f9d8-4881-82b5-029c347162db" message='"there was no error regarding CONNECTIVITY and UNAUTHORIZED"'/>
+				</otherwise>
+			</choice>
+			<ee:transform doc:name="Error message template" doc:id="c1499aa8-7b37-48a9-8473-0c55662f6424">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+        errorType: (error.errorType.namespace ++ ":" ++ error.errorType.identifier) default "",
+        errorMessage: error.cause.message,
+        failingComponent : error.failingComponent,
+        timestamp: now()
+}]]></ee:set-payload>
+			</ee:message>
+				<ee:variables>
+				</ee:variables>
+		</ee:transform>
+			<logger level="INFO" doc:name="Logger" doc:id="972ab2ac-bd4a-45a1-a33c-1f92e5991583" message="#[payload]"/>
+		
+</on-error-propagate>
+	
+</error-handler>
+</mule>
