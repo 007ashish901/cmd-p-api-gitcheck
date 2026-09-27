@@ -1,0 +1,24 @@
+
+webapi:
+    host: "webapi.collaboratemd.com"
+    port: "443"
+    basePath: "/v1/customer"
+
+
+
+
+
+apiAutodiscovery: 
+    id: "20308562"
+    
+    
+emailSmtp:
+  host: "smtp.gmail.com"
+  port: "465"
+  user: "helpdesk@clinnexus.com"
+  from: "helpdesk@clinnexus.com"
+  #to: "keerthan.bangera@accelirate.com,saujanya.verma@accelirate.com"
+  to: "Ashish.Nikam@accelirate.com"
+  starttls:
+    key: "mail.smtp.starttls.enable"
+    value: "true"        

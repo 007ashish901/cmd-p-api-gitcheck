@@ -1,0 +1,15 @@
+sequenceDiagram
+    participant Client as Client Application
+    participant API as CN CMD SYS API
+    participant CMD as CMD System
+
+    Client->>API: POST /api/customer/{customerId}/claim/xml
+    Note over API: Extract customerId from URI
+    API->>CMD: POST /{customerId}/claim/xml (XML Request)
+    Note over CMD: Process professional claim
+    CMD->>API: Response (XML/JSON)
+    Note over API: Transform response to JSON
+    API->>Client: JSON Response
+
+    Note over API,CMD: External Integration: CMD System for Professional Claims
+    Note over API: Error handling via global error handler

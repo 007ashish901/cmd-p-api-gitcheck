@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:email="http://www.mulesoft.org/schema/mule/email" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties" xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation=" http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd">
+    <http:listener-config name="cn-cmd-sys-api-httpListenerConfig">
+        <http:listener-connection host="0.0.0.0" port="8081" />
+    </http:listener-config>
+    <apikit:config name="cn-cmd-sys-api-config" api="resource::b6a9bca4-a4db-453e-a9ea-bb3aba0db3c9:clinnexus-cmd-sys-apiraml:1.0.7:raml:zip:cn-cmd-sys-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="19ae862a-4146-47ce-b41d-17253f8a0b08" basePath="${webapi.basePath}">
+        <http:request-connection protocol="HTTPS" host="${webapi.host}" port="${webapi.port}">
+            <http:authentication>
+                <http:basic-authentication username="${secure::webapi.username}" password="${secure::webapi.password}" />
+            </http:authentication>
+        </http:request-connection>
+    </http:request-config>
+    <configuration-properties doc:name="Configuration properties" doc:id="ba7c76fa-d494-48c4-bea5-d3cb8a4d1bb9" file="properties/${mule.env}.yaml" />
+    <global-property doc:name="Global Property" doc:id="5bb0639b-7c5d-40db-a62b-884c0099491c" name="mule.env" value="dev" />
+    <secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="e1103d22-57e1-4120-98b1-afed2dfa0139" file="secureProperties/${mule.env}-secure.yaml" key="${mule.secretKey}" />
+    <global-property doc:name="Global Property" doc:id="926c35ec-4fdc-4f82-8c97-d017a60a3d7f" name="mule.secretKey" value="password@1234567" />
+    <api-gateway:autodiscovery apiId="${apiAutodiscovery.id}" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="962ffa4e-7460-4b9c-a4ec-5839f678d561" flowRef="cn-cmd-sys-api-main" />
+    <email:smtp-config name="Email_SMTP" doc:name="Email SMTP" doc:id="a0ce06bd-bd1c-4521-9864-6a3f1b037963">
+        <email:smtps-connection host="${emailSmtp.host}" port="${emailSmtp.port}" user="${emailSmtp.user}" password="${secure::emailSmtp.password}">
+            <tls:context>
+                <tls:trust-store insecure="true" />
+            </tls:context>
+        </email:smtps-connection>
+    </email:smtp-config>
+</mule>

@@ -1,0 +1,11 @@
+sequenceDiagram
+    participant Client as Client Application
+    participant API as CN CMD SYS API
+
+    Client->>API: GET /api/customer/{customerId}/patient/{patientId}/xml
+    Note over API: Extract customerId and patientId from URI
+    Note over API: Generate mock patient XML response
+    API->>Client: XML Response (Patient Data)
+
+    Note over API: Mock response - no external system call
+    Note over API: Error handling via global error handler

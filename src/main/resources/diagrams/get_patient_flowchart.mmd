@@ -1,0 +1,10 @@
+graph TD
+    A[Client Request: GET patient/{patientId}/xml] --> B[Extract customerId and patientId from URI]
+    B --> C[Generate Mock Patient XML Response]
+    C --> D[Return XML Response to Client]
+    
+    style A fill:#e1f5fe
+    style D fill:#c8e6c9
+    style C fill:#f3e5f5
+    
+    note1[Note: Mock implementation - no external system call]

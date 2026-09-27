@@ -1,0 +1,14 @@
+graph TD
+    A[Client Request: POST patient/xml] --> B[Extract customerId from URI]
+    B --> C[Transform XML payload with namespace]
+    C --> D[Call CMD System API]
+    D --> E{CMD Response Success?}
+    E -->|Yes| F[Transform response to JSON]
+    E -->|No| G[Error Handler]
+    F --> H[Return JSON Response to Client]
+    G --> I[Return Error Response]
+    
+    style A fill:#e1f5fe
+    style H fill:#c8e6c9
+    style I fill:#ffcdd2
+    style D fill:#fff3e0
